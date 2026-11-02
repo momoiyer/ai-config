@@ -48,7 +48,7 @@ def config_text(original):
         if key == 'agents':
             continue
         if key in parsed and parsed[key] != value:
-            raise ValueError(f'Existing unmanaged {key}={parsed[key]!r}; review before changing it.')
+            raise ValueError(f'Existing unmanaged {key}; review before changing it.')
         if key not in parsed:
             root_lines.append(f'{key} = {json.dumps(value)}')
     agent_lines = []
@@ -97,33 +97,84 @@ def claude_text(original):
             'Where existing personal rules are stricter, keep those restrictions.\n\n')
     return ((body+'\n\n' if body else '')+start+'\n'+note+shared+'\n'+end+'\n').encode()
 
+def claude_settings_text(original):
+    """Add environment-file denies without replacing personal permissions or sandbox mode."""
+    def unique_object(pairs):
+        result = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError('Duplicate key in Claude settings; review before changing it.')
+            result[key] = value
+        return result
+
+    try:
+        settings = json.loads(original.decode(), object_pairs_hook=unique_object) if original else {}
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        raise ValueError('Invalid Claude settings JSON; review before changing it.') from None
+    if not isinstance(settings, dict):
+        raise ValueError('Claude settings must be a JSON object.')
+
+    def table(parent, key):
+        value = parent.setdefault(key, {})
+        if not isinstance(value, dict):
+            raise ValueError(f'Claude settings {key} must be an object.')
+        return value
+
+    def append_rules(parent, key, rules):
+        values = parent.setdefault(key, [])
+        if not isinstance(values, list) or any(not isinstance(item, str) for item in values):
+            raise ValueError(f'Claude settings {key} must be a list of strings.')
+        for rule in rules:
+            if rule not in values:
+                values.append(rule)
+
+    patterns = ('**/.env*', '**/*.env', '**/*.env.*')
+    permissions = table(settings, 'permissions')
+    append_rules(permissions, 'deny', [f'{tool}(//{pattern})' for tool in ('Read', 'Edit') for pattern in patterns])
+    filesystem = table(table(settings, 'sandbox'), 'filesystem')
+    append_rules(filesystem, 'denyRead', ['/'+pattern for pattern in patterns])
+    return (json.dumps(settings, indent=2, ensure_ascii=False)+'\n').encode()
+
 def claude_agent(data):
     """Convert the common role into Claude's native Markdown/frontmatter format."""
     # Provider-specific model IDs are intentionally not copied between clients.
     return ('---\nname: '+json.dumps(data['name'])+'\ndescription: '+json.dumps(data['description'])+
             '\nmodel: inherit\n---\n\n'+data['developer_instructions'].strip()+'\n').encode()
 
-def desired(config_original, claude_original=None):
+def desired(config_original, claude_original=None, claude_settings_original=None, only=None):
+    selected = set(only) if only is not None else {'policy', 'roles', 'skills', 'secret-access'}
+    if not selected <= {'policy', 'roles', 'skills', 'secret-access'}:
+        raise ValueError('Unknown installation group.')
     override = CODEx / 'AGENTS.override.md'
     if override.exists() and override.read_text().strip():
         raise ValueError(f'Global override would hide these rules: {override}')
-    result = {CODEx / 'AGENTS.md': (ROOT / 'global/AGENTS.md').read_bytes(),
-              CLAUDE / 'CLAUDE.md': claude_text(claude_original)}
-    for source in (ROOT / 'agents').glob('*.toml'):
-        data = tomllib.loads(source.read_text())
-        assert data['name'] == source.stem
-        assert data['description'] and data['developer_instructions']
-        result[CODEx / 'agents' / source.name] = source.read_bytes()
-        result[CLAUDE / 'agents' / (source.stem+'.md')] = claude_agent(data)
-    for source in (ROOT / 'skills').rglob('*'):
-        if source.is_file() and source.name != '.DS_Store':
-            relative = source.relative_to(ROOT / 'skills')
-            result[SHARED_SKILLS / relative] = source.read_bytes()
-            # Codex UI metadata is harmless to Claude but not needed for skill discovery.
-            if 'agents' not in relative.parts:
-                result[CLAUDE / 'skills' / relative] = source.read_bytes()
-    path = CODEx / 'config.toml'
-    result[path] = config_text(config_original)
+    result = {}
+    if 'policy' in selected:
+        result[CODEx / 'AGENTS.md'] = (ROOT / 'global/AGENTS.md').read_bytes()
+        result[CLAUDE / 'CLAUDE.md'] = claude_text(claude_original)
+    if 'secret-access' in selected:
+        result[CLAUDE / 'settings.json'] = claude_settings_text(claude_settings_original)
+    if 'roles' in selected:
+        for source in (ROOT / 'agents').glob('*.toml'):
+            data = tomllib.loads(source.read_text())
+            assert data['name'] == source.stem
+            assert data['description'] and data['developer_instructions']
+            result[CODEx / 'agents' / source.name] = source.read_bytes()
+            result[CLAUDE / 'agents' / (source.stem+'.md')] = claude_agent(data)
+    if 'skills' in selected:
+        for source in (ROOT / 'skills').rglob('*'):
+            if source.is_file() and source.name != '.DS_Store':
+                relative = source.relative_to(ROOT / 'skills')
+                result[SHARED_SKILLS / relative] = source.read_bytes()
+                # Codex UI metadata is harmless to Claude but not needed for skill discovery.
+                if 'agents' not in relative.parts:
+                    result[CLAUDE / 'skills' / relative] = source.read_bytes()
+        if (ROOT / 'skills/feedback-reflection/SKILL.md').is_file():
+            pointer = (json.dumps({'repository': str(ROOT)}, indent=2)+'\n').encode()
+            for home in (SHARED_SKILLS, CLAUDE / 'skills'):
+                result[home / 'feedback-reflection/source.json'] = pointer
+    if only is None:
+        result[CODEx / 'config.toml'] = config_text(config_original)
     return result
 
 def apply(changes, originals=None):
@@ -177,16 +228,22 @@ def main():
     group.add_argument('--apply', action='store_true')
     group.add_argument('--check', action='store_true')
     group.add_argument('--restore', metavar='BACKUP_DIRECTORY')
+    parser.add_argument('--only', nargs='+', choices=('policy', 'roles', 'skills', 'secret-access'),
+                        help='Preview/install/check selected groups, preserving unrelated settings; excludes Codex config.')
     args = parser.parse_args()
+    if args.restore and args.only:
+        parser.error('--only cannot be combined with --restore')
     if args.restore:
         restore(args.restore)
         return
     config_path = CODEx / 'config.toml'
-    config_original = current(config_path)
+    config_original = current(config_path) if args.only is None else None
     claude_path = CLAUDE / 'CLAUDE.md'
-    claude_original = current(claude_path)
-    targets = desired(config_original, claude_original)
-    snapshots = {config_path: config_original, claude_path: claude_original}
+    claude_original = current(claude_path) if args.only is None or 'policy' in args.only else None
+    settings_path = CLAUDE / 'settings.json'
+    settings_original = current(settings_path) if args.only is None or 'secret-access' in args.only else None
+    targets = desired(config_original, claude_original, settings_original, only=args.only)
+    snapshots = {config_path: config_original, claude_path: claude_original, settings_path: settings_original}
     originals = {path: snapshots[path] if path in snapshots else current(path) for path in targets}
     changes = {path: data for path, data in targets.items() if originals[path] != data}
     for path in changes:
@@ -194,7 +251,7 @@ def main():
     if args.check:
         if changes:
             raise SystemExit('Installed setup differs from source.')
-        print('All managed files match; TOML and config preservation checks passed.')
+        print('Selected managed files match.' if args.only else 'All managed files match; TOML and config preservation checks passed.')
     elif args.apply and changes:
         apply(changes, originals)
         print('Installed', len(changes), 'files. Start fresh Codex and Claude sessions.')
