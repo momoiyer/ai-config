@@ -60,6 +60,14 @@ Use a task branch for features/fixes without discarding unfinished work or autom
 
 Agents prepare logical commit groups with exact paths and ready-to-use messages, plus a PR title and description with the problem, behavior, actual validation, and risks. You run the commits, pushes, merges, and PR creation. Each PR should deliver one reviewable outcome. Agents watch scope during the work and recommend independently testable PRs before a diff grows into hundreds of files, especially around 300; dependent PRs need an explicit order and base. File count is a warning signal, not a substitute for judging review effort.
 
+## PR descriptions
+
+Use **Summary**, **Changes**, **Tests**, and **Notes** as the default structure, respecting an existing repository template. Summary gives the problem or need, motivation, and resulting behaviour in 1–3 sentences. Changes uses short bullets grouped by purpose and explains important decisions. Tests records actual commands/results, relevant manual checks, and unverified areas. Notes contains meaningful limitations, risks, migrations, dependencies, or reviewer focus; use `None` when there are no relevant notes.
+
+Keep the description useful without making it a process document: no exhaustive file inventory, duplicated roadmap, empty boilerplate, or unsupported claims that configured tests/CI passed. A docs-only PR can simply name the documentation review/checks. Update the text when the final scope changes. Repository-specific details stay in the project, not the shared policy.
+
+This format follows the context and rationale principles in [GitHub's review guidance](https://docs.github.com/en/pull-requests/concepts/helping-others-review-your-changes) and [Google's change-description guidance](https://google.github.io/eng-practices/review/developer/cl-descriptions.html). The four section names are our default, not a universal requirement from those sources.
+
 ## Reflection and preferences
 
 At task start, agents review available preferences, project standards, and relevant corrections. Before handoff and after feedback, they check alignment and apply useful adjustments. Delegated agents receive the same expectations. Reflection stays brief and practical; agents cannot claim to remember sessions they cannot access. Explicit durable preferences belong in the shared policy, verified repository standards in the project guide, and uncertain inferences need confirmation before becoming persistent rules.
