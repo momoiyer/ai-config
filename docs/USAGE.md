@@ -58,7 +58,7 @@ Your current preference is that you perform Git commits, pushes, merges, and PR 
 
 Use a task branch for features/fixes without discarding unfinished work or automatically pulling just to create a branch. Branch and workspace ownership matter when several agents work simultaneously. Expect a timely branch reminder for new independent work and a commit reminder when a coherent milestone passes its checks.
 
-Agents prepare logical commit groups with exact paths and ready-to-use messages, plus a PR title and description with the problem, behavior, actual validation, and risks. You run the commits, pushes, merges, and PR creation. Each PR should deliver one reviewable outcome. Agents watch scope during the work and recommend independently testable PRs before a diff grows into hundreds of files, especially around 300; dependent PRs need an explicit order and base. File count is a warning signal, not a substitute for judging review effort.
+Agents prepare logical commit groups with exact paths and ready-to-use messages, plus a PR title and description with the problem, behavior, actual validation, and risks. You run the commits, pushes, merges, and PR creation. Each PR should deliver one reviewable outcome. Agents watch scope during the work and recommend independently testable PRs before a diff grows into hundreds of files, starting around 100 changed files; dependent PRs need an explicit order and base. File count is a warning signal, not a substitute for judging review effort. Also flag commits approaching 100 files; do not make one commit per file. Keep changes grouped by purpose with related tests. Follow repository conventions, using a short imperative subject and a rationale body when useful; Conventional Commits is optional unless already required. See [Git contributor guidance](https://git-scm.com/docs/SubmittingPatches) for the rationale, not universal Git syntax requirements.
 
 ## PR descriptions
 
@@ -71,6 +71,16 @@ This format follows the context and rationale principles in [GitHub's review gui
 ## Reflection and preferences
 
 At task start, agents review available preferences, project standards, and relevant corrections. Before handoff and after feedback, they check alignment and apply useful adjustments. Delegated agents receive the same expectations. Reflection stays brief and practical; agents cannot claim to remember sessions they cannot access. Explicit durable preferences belong in the shared policy, verified repository standards in the project guide, and uncertain inferences need confirmation before becoming persistent rules.
+
+Use `$feedback-reflection` in Codex or `/feedback-reflection` in Claude when a correction should improve future work. Agents should also select it after meaningful feedback. Validated reusable feedback authorizes a minimal automatic local update to this repository and targeted backed-up activation; agents still respect permissions, preserve concurrent work, and leave commits and publishing to you. Its installed `source.json` supplies the local checkout location. If the checkout is missing, read-only, or conflicting, expect a specific blocker and proposed correction, not a claim that the update was saved. No background monitoring or conversation collection is installed.
+
+Each role now has guidance for task-specific skills and official-source research. Prefer independent agents when work can proceed in parallel; this works with native subagents and does not require Orca. Orca is useful when separate client workspaces or another client are needed. Avoid parallel edits to shared files. Consider a security/privacy specialist for recurring security reviews; extend the existing infra role for CI instead of adding an overlapping release role. Repeated procedures normally become skills, while small deterministic lifecycle checks can become reviewed hooks.
+
+## Private files and new repositories
+
+Never ask an agent to inspect an environment file, including `.env.example`, or dump secret values. Use a separately named sanitized schema for variable names and synthetic examples. Agents inspect safe filenames and selected diffs, add relevant ignores early, and flag tracked sensitive paths without opening them. `.gitignore` does not untrack files or remove history. [Secret-file access boundaries](SECRET-ACCESS.md) describes installed Claude deny lists, the remaining Codex legacy-sandbox gap, and stronger isolation options. No real secret file was accessed to test these changes.
+
+When creating a suitable GitHub repository, project-kickoff uses its repository-baseline reference to add verified tests/build checks and applicable Dependabot configuration. CI uses read-only permissions, immutable action pins, timeouts and cancellation; no default deploy, release, or auto-merge. Dependency review and CodeQL depend on stack and eligibility. Secret scanning, push protection and branch rules need separate remote activation; a configuration file is not evidence that they are active. This repository demonstrates the small CI/Dependabot baseline; hosted runs still require a push by you.
 
 ## Keep longer work grounded
 

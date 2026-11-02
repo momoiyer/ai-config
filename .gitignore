@@ -8,6 +8,19 @@ __pycache__/
 *.db*
 *.log
 .env*
-!.env.example
 node_modules/
 artifacts/
+
+# Secrets and personal client overrides
+*.env
+*.env.*
+.envrc
+secrets/
+credentials/
+*.pem
+*.key
+*.p12
+*.pfx
+.claude/settings.local.json
+.codex/auth.json
+setup-backups/
