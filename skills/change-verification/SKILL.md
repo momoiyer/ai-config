@@ -14,3 +14,5 @@ Run focused checks, fix task-caused failures, then run required broader checks. 
 For risky or cross-cutting changes, delegate a bounded independent review. Give the reviewer acceptance criteria and the actual diff; reconcile findings against evidence. If delegation is unavailable, do the review directly and disclose the limitation when it matters.
 
 Inspect the final diff for scope and accidental files. Report what was checked, exact commands and outcomes, observed defects, blockers, and unverified areas. Separate ready for review from ready for production. A checklist, agent approval, or proposed test is not proof that the test ran.
+
+Before handoff, review tracked/staged filenames and only safe explicit content paths; never read secret files or environment values. Verify relevant ignore rules without opening the ignored files. Check commit/PR grouping against review effort and report any sensitive tracked paths without their contents. Distinguish local configuration from remotely enabled CI or security controls. Feed validated reusable corrections into feedback-reflection rather than exporting project evidence.
