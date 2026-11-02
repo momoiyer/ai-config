@@ -1,0 +1,4 @@
+interface:
+  display_name: "Change verification"
+  short_description: "Check behavior and report QA evidence"
+  default_prompt: "Use $change-verification for this task."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Project kickoff"
+  short_description: "Understand a repo and scope substantial work"
+  default_prompt: "Use $project-kickoff for this task."

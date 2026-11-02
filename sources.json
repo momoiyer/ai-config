@@ -1,0 +1,19 @@
+{
+  "reviewed": "2026-11-02",
+  "skills": [
+    {
+      "name": "frontend-design",
+      "repo": "anthropics/skills",
+      "ref": "ca45fc496a3436251f191354091d557da31c15b5",
+      "path": "skills/frontend-design",
+      "sha256": "d91970639e9f5c37682ac7ab60094d35f1c7c1f38d731bd56396563aee10c1d3"
+    },
+    {
+      "name": "web-design-guidelines",
+      "repo": "vercel-labs/agent-skills",
+      "ref": "1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62",
+      "path": "skills/web-design-guidelines",
+      "sha256": "f4647ca866a3accf763777f83e7682954f0187cd6bea7eea0399796652414e8f"
+    }
+  ]
+}
