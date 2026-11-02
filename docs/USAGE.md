@@ -56,7 +56,13 @@ Routine reversible local investigation, edits, and relevant tests are authorized
 
 Your current preference is that you perform Git commits, pushes, merges, and PR creation. Agents may stage and prepare copy-paste-ready commands. To make an exception for a specific task, authorize it explicitly in that conversation. Do not enable blanket permission bypasses to reduce ordinary prompts.
 
-Use a task branch for features/fixes without discarding unfinished work or automatically pulling just to create a branch. Branch and workspace ownership matter when several agents work simultaneously.
+Use a task branch for features/fixes without discarding unfinished work or automatically pulling just to create a branch. Branch and workspace ownership matter when several agents work simultaneously. Expect a timely branch reminder for new independent work and a commit reminder when a coherent milestone passes its checks.
+
+Agents prepare logical commit groups with exact paths and ready-to-use messages, plus a PR title and description with the problem, behavior, actual validation, and risks. You run the commits, pushes, merges, and PR creation. Each PR should deliver one reviewable outcome. Agents watch scope during the work and recommend independently testable PRs before a diff grows into hundreds of files, especially around 300; dependent PRs need an explicit order and base. File count is a warning signal, not a substitute for judging review effort.
+
+## Reflection and preferences
+
+At task start, agents review available preferences, project standards, and relevant corrections. Before handoff and after feedback, they check alignment and apply useful adjustments. Delegated agents receive the same expectations. Reflection stays brief and practical; agents cannot claim to remember sessions they cannot access. Explicit durable preferences belong in the shared policy, verified repository standards in the project guide, and uncertain inferences need confirmation before becoming persistent rules.
 
 ## Keep longer work grounded
 
